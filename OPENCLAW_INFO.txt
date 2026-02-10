@@ -1,0 +1,45 @@
+OpenClaw Docker Container Information
+======================================
+
+✅ Container Status: Running
+Container Name: openclaw-openclaw-gateway-1
+Port: 18789-18790
+Built with: Local Docker image (openclaw:local)
+
+🔑 Gateway Token: [REDACTED - See ~/.openclaw/openclaw.json or .env file]
+
+🌐 Access URL:
+http://localhost:18789/#token=YOUR_GATEWAY_TOKEN_HERE
+
+📁 Directories:
+- Config: /home/ruby/.openclaw
+- Workspace: /home/ruby/.openclaw/workspace
+- Project: /home/ruby/clawdbot/openclaw
+
+Docker Compose Commands:
+-------------------------
+# View status
+docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml ps
+
+# View logs
+docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml logs -f openclaw-gateway
+
+# Stop gateway
+docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml stop openclaw-gateway
+
+# Start gateway
+docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml start openclaw-gateway
+
+# Restart gateway
+docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml restart openclaw-gateway
+
+# Get dashboard URL
+docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml run --rm openclaw-cli dashboard --no-open
+
+# Health check
+docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml exec openclaw-gateway node dist/index.js health --token "YOUR_GATEWAY_TOKEN_HERE"
+
+📚 Documentation:
+- Control UI: https://docs.openclaw.ai/web/control-ui
+- Remote Access: https://docs.openclaw.ai/gateway/remote
+- Channels: https://docs.openclaw.ai/channels
