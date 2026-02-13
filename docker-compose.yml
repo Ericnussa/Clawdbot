@@ -1,0 +1,37 @@
+services:
+  openclaw-gateway:
+    image: ${OPENCLAW_IMAGE:-openclaw:local}
+    container_name: openclaw-gateway
+    restart: unless-stopped
+    ports:
+      - "${OPENCLAW_GATEWAY_PORT:-18789}:18789"
+    environment:
+      # OpenClaw reads these env vars.
+      - OPENCLAW_CONFIG_DIR=/home/node/.openclaw
+      - OPENCLAW_GATEWAY_PORT=18789
+      - OPENCLAW_GATEWAY_BIND=${OPENCLAW_GATEWAY_BIND:-loopback}
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-${HOME}/.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-${HOME}/.openclaw/workspace}:/home/node/.openclaw/workspace
+    command: ["gateway", "--port", "18789"]
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:18789/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # Helper container for onboarding, dashboard links, and device approval.
+  openclaw-cli:
+    image: ${OPENCLAW_IMAGE:-openclaw:local}
+    profiles: ["cli"]
+    environment:
+      - OPENCLAW_CONFIG_DIR=/home/node/.openclaw
+      - OPENCLAW_GATEWAY_URL=ws://openclaw-gateway:18789
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN}
+    volumes:
+      - ${OPENCLAW_CONFIG_DIR:-${HOME}/.openclaw}:/home/node/.openclaw
+      - ${OPENCLAW_WORKSPACE_DIR:-${HOME}/.openclaw/workspace}:/home/node/.openclaw/workspace
+    depends_on:
+      - openclaw-gateway
+    entrypoint: ["openclaw"]

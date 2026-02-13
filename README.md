@@ -1,125 +1,137 @@
-# ClawdBot - OpenClaw Docker Setup
+# ClawdBot — OpenClaw Docker Template (Reliable + Simple)
 
-Documentation and configuration for running [OpenClaw](https://openclaw.ai) personal AI assistant in Docker.
+A public template repo for running [OpenClaw](https://openclaw.ai) in **Docker Compose**.
 
-## 📚 What's This?
+Goals:
 
-This repository contains setup guides, troubleshooting documentation, and configuration files for deploying OpenClaw (a personal AI assistant) using Docker on Raspberry Pi or other Linux systems.
-
-## 🚀 Quick Start
-
-### Prerequisites
-- Docker and Docker Compose installed
-- Node.js 22+ (for OpenClaw)
-- At least one AI provider API key (Anthropic Claude or OpenAI)
-
-### Setup
-
-1. **Clone this repository**
-   ```bash
-   git clone https://github.com/ericnussa/clawdbot.git
-   cd clawdbot
-   ```
-
-2. **Follow the setup guide**
-   - See [SETUP_GUIDE.md](SETUP_GUIDE.md) for complete installation and troubleshooting
-
-3. **Check container information**
-   - See [OPENCLAW_INFO.txt](OPENCLAW_INFO.txt) for Docker commands and access URLs
-
-## 📖 Documentation
-
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Complete setup and troubleshooting guide
-  - Fixing "unauthorized: gateway token missing" error
-  - Fixing "pairing required" error
-  - Configuration examples
-  - Docker commands reference
-  - Security best practices
-
-- **[OPENCLAW_INFO.txt](OPENCLAW_INFO.txt)** - Quick reference
-  - Container status and ports
-  - Access URLs
-  - Docker Compose commands
-  - Directory structure
-
-## 🔧 Common Issues
-
-### Issue: "unauthorized: gateway token missing"
-**Solution:** Add the token to the URL: `http://localhost:18789/#token=YOUR_TOKEN`
-
-See [SETUP_GUIDE.md](SETUP_GUIDE.md#issue-1-unauthorized-gateway-token-missing) for details.
-
-### Issue: "pairing required"
-**Solution:** Add `"controlUi": { "allowInsecureAuth": true }` to your config.
-
-See [SETUP_GUIDE.md](SETUP_GUIDE.md#issue-2-pairing-required) for details.
-
-## 🔐 Security Notes
-
-- **Never commit sensitive files:**
-  - `.env` files containing tokens
-  - `openclaw.json` with actual configuration
-  - `.openclaw/` directory
-
-- **Token management:**
-  - Keep your gateway token secret
-  - Don't expose ports to the public internet
-  - Use on trusted networks only
-
-The included `.gitignore` protects these files automatically.
-
-## 🐳 Docker Quick Commands
-
-```bash
-# View status
-docker compose ps
-
-# View logs
-docker compose logs -f openclaw-gateway
-
-# Restart gateway
-docker compose restart openclaw-gateway
-
-# Stop/Start
-docker compose stop openclaw-gateway
-docker compose start openclaw-gateway
-```
-
-## 🌐 About OpenClaw
-
-OpenClaw is a personal AI assistant that runs on your own devices. It supports:
-- Multiple messaging channels (WhatsApp, Telegram, Slack, Discord, etc.)
-- Voice interaction on macOS/iOS/Android
-- Local workspace and file operations
-- Privacy-focused, self-hosted deployment
-
-**Official Resources:**
-- [Website](https://openclaw.ai)
-- [Documentation](https://docs.openclaw.ai)
-- [GitHub](https://github.com/openclaw/openclaw)
-- [Discord Community](https://discord.gg/clawd)
-
-## 📝 License
-
-MIT License - See [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-This is a personal documentation repository, but feel free to:
-- Open issues for questions or corrections
-- Submit pull requests for improvements
-- Share your own setup tips
-
-## 💬 Support
-
-For OpenClaw support:
-- [Official Documentation](https://docs.openclaw.ai)
-- [Discord Community](https://discord.gg/clawd)
-- [GitHub Issues](https://github.com/openclaw/openclaw/issues)
-
-For issues with this documentation:
-- Open an issue in this repository
+- **Simple install**: one script
+- **Reliable**: restart policies + healthcheck
+- **Safe defaults**: loopback bind by default; token auth
+- **Documented**: common problems, plus **Tailscale** remote access
 
 ---
 
-**Built with** ❤️ **for the OpenClaw community**
+## Quick start
+
+### 1) Clone
+
+```bash
+git clone https://github.com/Ericnussa/Clawdbot.git
+cd Clawdbot
+```
+
+### 2) Run setup
+
+```bash
+./docker-setup.sh
+```
+
+That script will:
+
+- create `~/.openclaw/` + `~/.openclaw/workspace/`
+- generate a gateway token into `.env` (if missing)
+- build an `openclaw:local` image
+- start the gateway via Docker Compose
+- run `openclaw onboard` (interactive)
+
+### 3) Open the Control UI
+
+- Local: `http://127.0.0.1:18789/`
+- Paste your token in the UI settings (or use the dashboard helper below)
+
+Dashboard helper:
+
+```bash
+docker compose run --rm openclaw-cli dashboard --no-open
+```
+
+---
+
+## Files
+
+- `docker-compose.yml` — gateway + helper CLI container
+- `Dockerfile` — minimal OpenClaw image
+- `.env.example` — config template (copy to `.env`)
+- `docker-setup.sh` — easiest “do everything” installer
+
+---
+
+## Common issues
+
+### “unauthorized: gateway token missing”
+
+You need the token set in the Control UI.
+
+- Use: `docker compose run --rm openclaw-cli dashboard --no-open`
+- Or paste the token in Control UI Settings.
+
+### “pairing required” (Docker / non-loopback)
+
+If you bind the gateway to `lan` / `tailnet`, your browser is not “loopback” anymore.
+Approve the device:
+
+```bash
+docker compose run --rm openclaw-cli devices list
+docker compose run --rm openclaw-cli devices approve <requestId>
+```
+
+---
+
+## Tailscale (recommended remote access)
+
+**Best practice:** install Tailscale on the **host**, not inside the OpenClaw container.
+
+### Option A — Keep OpenClaw local-only, access host via Tailscale
+
+1) Install Tailscale on the host:
+
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+
+2) Keep OpenClaw on loopback (default):
+
+```bash
+# in .env
+OPENCLAW_GATEWAY_BIND=loopback
+```
+
+3) Use `tailscale serve` to expose the Control UI safely:
+
+```bash
+# Serve the HTTP UI over your tailnet
+sudo tailscale serve --http=443 http://127.0.0.1:18789
+```
+
+Now you can reach it from other tailnet devices without opening ports.
+
+### Option B — Bind OpenClaw to tailnet
+
+If you *really* want the gateway to listen on non-loopback, set:
+
+```bash
+OPENCLAW_GATEWAY_BIND=tailnet
+```
+
+Then restart:
+
+```bash
+docker compose up -d
+```
+
+Note: you’ll likely need to approve the browser device (pairing).
+
+---
+
+## Security notes
+
+- Treat your gateway token like a password.
+- Don’t expose `18789` to the public internet.
+- Don’t commit `.env` or `~/.openclaw/`.
+
+---
+
+## License
+
+MIT
