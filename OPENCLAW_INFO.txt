@@ -1,45 +1,22 @@
-OpenClaw Docker Container Information
-======================================
+ClawdBot / OpenClaw Docker Template
 
-✅ Container Status: Running
-Container Name: openclaw-openclaw-gateway-1
-Port: 18789-18790
-Built with: Local Docker image (openclaw:local)
+Quick commands:
 
-🔑 Gateway Token: [REDACTED - See ~/.openclaw/openclaw.json or .env file]
+  # start
+  docker compose up -d
 
-🌐 Access URL:
-http://localhost:18789/#token=YOUR_GATEWAY_TOKEN_HERE
+  # logs
+  docker compose logs -f openclaw-gateway
 
-📁 Directories:
-- Config: /home/ruby/.openclaw
-- Workspace: /home/ruby/.openclaw/workspace
-- Project: /home/ruby/clawdbot/openclaw
+  # dashboard link (prints URL + token flow)
+  docker compose run --rm openclaw-cli dashboard --no-open
 
-Docker Compose Commands:
--------------------------
-# View status
-docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml ps
+  # pairing approve (if needed)
+  docker compose run --rm openclaw-cli devices list
+  docker compose run --rm openclaw-cli devices approve <requestId>
 
-# View logs
-docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml logs -f openclaw-gateway
+UI:
+  http://127.0.0.1:18789/
 
-# Stop gateway
-docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml stop openclaw-gateway
-
-# Start gateway
-docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml start openclaw-gateway
-
-# Restart gateway
-docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml restart openclaw-gateway
-
-# Get dashboard URL
-docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml run --rm openclaw-cli dashboard --no-open
-
-# Health check
-docker compose -f /home/ruby/clawdbot/openclaw/docker-compose.yml exec openclaw-gateway node dist/index.js health --token "YOUR_GATEWAY_TOKEN_HERE"
-
-📚 Documentation:
-- Control UI: https://docs.openclaw.ai/web/control-ui
-- Remote Access: https://docs.openclaw.ai/gateway/remote
-- Channels: https://docs.openclaw.ai/channels
+Token:
+  Stored in .env as OPENCLAW_GATEWAY_TOKEN
